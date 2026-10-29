@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.gnome.Snapshot
+# Use GTK GPU renderer for Snapshot only (system default GSK_RENDERER=cairo is too slow for camera preview).
+Exec=/usr/bin/env GSK_RENDERER=gl /usr/bin/snapshot --gapplication-service

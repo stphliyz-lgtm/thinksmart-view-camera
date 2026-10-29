@@ -1,0 +1,91 @@
+/*
+ * Front camera (Samsung S5KC505A) for the Lenovo ThinkSmart View CD-18781Y.
+ * Appended to the decompiled stock postmarketOS DTB by patch_dtb.py, which
+ * adds the labels used here. Numbers follow the Lenovo downstream DT:
+ *   CCI master 0, address 0x37, CSIPHY0 with 2 data lanes,
+ *   MCLK0 (GPIO 26) at 24 MHz, reset GPIO 40, standby GPIO 39,
+ *   VDIG enable GPIO 118, VANA enable GPIO 119,
+ *   VIO pm8953_l6 1.8 V, VANA pm8953_l17 2.8 V, VDIG pm8953_l2 1.2 V.
+ * GPIO flags: 0 = active high, 1 = active low.
+ */
+
+/ {
+	cam_front_vana: cam-front-vana-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "cam_front_vana";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+		vin-supply = <&pm8953_l17>;
+		gpio = <&tlmm 119 0>;
+		enable-active-high;
+		startup-delay-us = <1000>;
+	};
+
+	cam_front_vdig: cam-front-vdig-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "cam_front_vdig";
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		vin-supply = <&pm8953_l2>;
+		gpio = <&tlmm 118 0>;
+		enable-active-high;
+		startup-delay-us = <1000>;
+	};
+};
+
+&camss {
+	status = "okay";
+	vdda-supply = <&pm8953_s3>;
+
+	ports {
+		port@0 {
+			reg = <0>;
+
+			csiphy0_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1>;
+				remote-endpoint = <&s5kc505a_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	status = "okay";
+};
+
+&cci_i2c0 {
+	camera-sensor@37 {
+		compatible = "samsung,s5kc505a";
+		reg = <0x37>;
+
+		clocks = <&gcc 107>;		/* GCC_CAMSS_MCLK0_CLK */
+		assigned-clocks = <&gcc 107>;
+		assigned-clock-rates = <24000000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&camss_mclk0_default>;
+
+		reset-gpios = <&tlmm 40 1>;
+		powerdown-gpios = <&tlmm 39 1>;
+
+		vio-supply = <&pm8953_l6>;
+		vana-supply = <&cam_front_vana>;
+		vdig-supply = <&cam_front_vdig>;
+
+		orientation = <0>;	/* front */
+		/*
+		 * Relative to the panel's native portrait orientation. Android's
+		 * mount angle of 270 is relative to its landscape default.
+		 */
+		rotation = <180>;
+
+		port {
+			s5kc505a_ep: endpoint {
+				data-lanes = <1 2>;
+				link-frequencies = /bits/ 64 <480000000>;
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+};
